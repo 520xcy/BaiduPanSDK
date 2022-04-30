@@ -1,0 +1,16 @@
+/.idea/
+__pycache__
+/data/db.db
+/data/data
+/data/xiang
+*.DS_Store
+contents/*
+indexstatic.php
+._*
+logs/*
+/.token
+/.task
+/download/*
+node_modules
+/page/dist
+.env
