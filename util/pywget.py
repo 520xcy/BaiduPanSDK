@@ -52,15 +52,12 @@ class wget(threading.Thread):
   
             self.filename = os.path.basename(self.local_filename)
             self.local_filename = os.path.join(_dirname, self.remove_nonchars(self.filename))
-            self._size = self.size
 
             if os.path.isfile(self.local_filename):
                 _filename, _ext = os.path.splitext(self.filename)
                 self.filename = _filename+'_'+str(int(time.time()))+_ext
                 self.local_filename = os.path.join(os.path.dirname(
                     self.local_filename), self.remove_nonchars(self.filename))
-                self.size = 0
-
 
             self.local_filename += '.pydownloading'
             if os.path.isfile(self.local_filename):
@@ -112,17 +109,17 @@ class wget(threading.Thread):
                     '\nDownload Finished!\nTotal Time: %ss, Download Speed: %sk/s\n' % (spend, speed))
                 sys.stdout.flush()
                 self.connect = 'Finished!'
-                if self.md5:
-                    with open(self.local_filename, 'rb') as fp:
-                        data = fp.read()
-                    file_md5 = hashlib.md5(data).hexdigest()
-                    if self.md5 != file_md5:
-                        self.connect = 'Finished and MD5 check wrong!'
-                        sys.stdout.write('md5 check wrong!')
-                    else:
-                        self.connect = 'Finished and MD5 check pass!'
-                        sys.stdout.write('md5 check pass!')
-                    sys.stdout.flush()
+            if self.md5:
+                with open(self.local_filename, 'rb') as fp:
+                    data = fp.read()
+                file_md5 = hashlib.md5(data).hexdigest()
+                if self.md5 != file_md5:
+                    self.connect = 'Finished and MD5 check wrong!'
+                    sys.stdout.write('md5 check wrong!')
+                else:
+                    self.connect = 'Finished and MD5 check pass!'
+                    sys.stdout.write('md5 check pass!')
+                sys.stdout.flush()
 
         except Exception as e:
             print(str(e))
