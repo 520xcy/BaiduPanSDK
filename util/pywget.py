@@ -68,8 +68,6 @@ class wget(threading.Thread):
                     self.headers['Range'] = "bytes=%d-" % (self.size, )
                     self._size = self.size + 1
 
-            r = requests.get(self.url, stream=True,
-                             verify=False, headers=self.headers)
             if self.total > 0:
                 print("[+] Size: %dKB" % (self.total / 1024))
             else:
@@ -86,7 +84,7 @@ class wget(threading.Thread):
                 'connect':self.connect
             }
             self.sendStatus(**d)
-
+            r = requests.get(self.url, stream=True, headers=self.headers)
             with open(self.local_filename, 'ab+') as f:
                 f.seek(self.size)
                 f.truncate()
