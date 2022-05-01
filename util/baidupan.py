@@ -134,7 +134,7 @@ class baidupan(object):
         url = "https://pan.baidu.com/rest/2.0/xpan/multimedia"
         return self.getUrl(url, headers=headers, payload=payload)
 
-    def getFiles(self, fsids: list,  needmd5: bool = False):
+    def getFiles(self, fsids: list):
         error = []
         _dlist = []
         _fsids = []
@@ -162,11 +162,7 @@ class baidupan(object):
 
                 url = i['dlink']+f"&access_token={self.at}"
                 size = i['size']
-                if needmd5:
-                    md5 = i['md5']
-                else:
-                    md5 = ''
-
+                md5 = ''
                 # 如果目前线程队列超过了设定的上线则等待。
                 wget.lck.acquire()
                 if len(wget.tlist) >= wget.maxthreads:
