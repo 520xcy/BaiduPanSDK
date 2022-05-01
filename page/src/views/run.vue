@@ -54,7 +54,7 @@
           fixed
         >
         </el-table-column>
-        <el-table-column width="200px" label="下载进度">
+        <el-table-column min-width="300px" label="下载进度">
           <template #default="scope">
             <el-progress :percentage="(scope.row.size / scope.row.total) * 100">
               {{ ((scope.row.size / scope.row.total) * 100).toFixed(2) }}%&nbsp;{{ getfilesize(scope.row.speed) }}/s
