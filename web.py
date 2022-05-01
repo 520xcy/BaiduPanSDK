@@ -174,7 +174,7 @@ def getFilemeta():
 def getFiles():
     try:
         fsids = request.get_json()['fsids']
-        res = baidu.getFiles(fsids=fsids, needmd5=True)
+        res = baidu.getFiles(fsids=fsids)
         return jsonify({"code": 200, "data": res})
     except Exception as e:
         log.error(str(e))
