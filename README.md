@@ -9,7 +9,7 @@ https://pan.baidu.com/union/home
 
 ## 安装&使用
 ```
-git clone https://github.com/520xcy/BaiduPanSDK
+git clone https://github.com/520xcy/BaiduPanSDK.git
 ```
 或直接下载解压
 ```
