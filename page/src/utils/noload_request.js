@@ -24,6 +24,7 @@ const errorHandler = (error) => {
         errorsmsg.title = '错误'+error.response.status+' '+error.response.data.message;
       
         if (error.request.status == 401) {
+            localStorage.removeItem("baidusdk");
             window.location.reload();
         } 
         if(Object.prototype.toString.call(error.response.data.errors) === '[object Object]'){
@@ -55,6 +56,17 @@ const errorHandler = (error) => {
     return Promise.reject(error)
 
 }
+
+service.interceptors.request.use(
+    config => {
+        const token = localStorage.getItem("baidusdk")
+        if (token) {
+            config.headers['Baidusdk'] = token
+        }
+        return config;
+    },
+    errorHandler
+);
 
 service.interceptors.response.use(
     response => {

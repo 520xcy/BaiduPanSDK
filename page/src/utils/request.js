@@ -26,6 +26,7 @@ const errorHandler = (error) => {
         errorsmsg.title = '错误' + error.response.status + ' ' + error.response.data.message;
 
         if (error.request.status == 401) {
+            localStorage.removeItem("baidusdk");
             window.location.reload();
         }
 
@@ -68,7 +69,10 @@ service.interceptors.request.use(
             spinner: 'el-icon-loading',
             background: 'rgba(0, 0, 0, 0.4)'
         })
-
+        const token = localStorage.getItem("baidusdk")
+        if (token) {
+            config.headers['Baidusdk'] = token
+        }
         return config;
     },
     errorHandler

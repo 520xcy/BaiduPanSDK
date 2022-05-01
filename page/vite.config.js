@@ -16,7 +16,7 @@ export default {
     ],
     build: {
         sourcemap: false,
-        outDir: 'dist', //指定输出路径
+        outDir: '../template', //指定输出路径
         assetsDir: 'assets', // 指定生成静态资源的存放路径
         rollupOptions: {
             output: {

@@ -1,34 +1,43 @@
 <template>
-  <el-row :gutter="20">
-    <el-col :span="6">
-      <p>扫二维码</p>
-      <img :src="qrcode_url" alt="" />
-    </el-col>
-    <el-col :span="6">
-      <p>或在下面输入:{{ user_code }}</p>
-      <iframe
-        :src="verification_url"
-        width="500px"
-        height="500px"
-        frameborder="0"
-        sandbox="allow-scripts allow-forms allow-same-origin"
-      ></iframe>
-    </el-col>
-    <el-col :span="12" :offset="6"
-      ><el-button
-        style="width: 100%"
-        size="large"
-        type="primary"
-        plain
-        @click="getAccessToken()"
-        >已完成授权</el-button
+  <div class="login-wrap">
+    <div class="ms-login">
+      <div class="ms-title">管理登录</div>
+      <el-form
+        :model="param"
+        :rules="rules"
+        ref="login"
+        label-width="0px"
+        class="ms-content"
       >
-    </el-col>
-  </el-row>
+        <el-form-item prop="user">
+          <el-input v-model="param.user" placeholder="用户名">
+            <template #prepend>
+              <el-button icon="user"></el-button>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item prop="password">
+          <el-input
+            type="password"
+            placeholder="密码"
+            v-model="param.password"
+            @keyup.enter="submitForm()"
+          >
+            <template #prepend>
+              <el-button icon="lock"></el-button>
+            </template>
+          </el-input>
+        </el-form-item>
+        <div class="login-btn">
+          <el-button type="primary" @click="submitForm()">登录</el-button>
+        </div>
+      </el-form>
+    </div>
+  </div>
 </template>
 
 <script>
-import { ref } from "vue";
+import { ref, reactive } from "vue";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
@@ -38,52 +47,99 @@ import request from "../utils/request";
 export default {
   setup() {
     const router = useRouter();
-
-    const user_code = ref("");
-    const verification_url = ref("");
-    const qrcode_url = ref("");
-    const getCode = () => {
-      request({ url: apiUrl.getCode, method: "get" }).then((res) => {
-        user_code.value = res.data.data.user_code;
-        verification_url.value = res.data.data.verification_url;
-        qrcode_url.value = res.data.data.qrcode_url;
-      });
+    const param = reactive({
+      user: "admin",
+      password: "admin888",
+    });
+  
+    const rules = {
+      user: [
+        {
+          required: true,
+          message: "请输入用户名",
+          trigger: "blur",
+        },
+      ],
+      password: [{ required: true, message: "请输入密码", trigger: "blur" }],
     };
-    getCode();
+    const login = ref(null);
+    const submitForm = () => {
+      login.value.validate((valid) => {
+        if (valid) {
+          request({ url: apiUrl.getLogin, method: "post", data: param }).then(
+            (res) => {
+              ElMessage.success("登录成功");
+              // request({ url: apiUrl.me, method: "get" }).then((res) => {
+              //   if (Object.hasOwnProperty.call(res.data, 'get_departments') && Object.hasOwnProperty.call(res.data.get_departments, 'name')) {
+              //   }
+              //   username.value = res.data.data.name;
+              // });
+            
+              localStorage.setItem("baidusdk", res.data.token);
 
-    const getAccessToken = () => {
-      request({ url: apiUrl.getAccessToken, method: "get" }).then((res) => {
-        if (res.data.code !== 200) {
-          ElMessage.error("token获取失败,请刷新页面重新授权");
+              router.push('/');
+            }
+          );
         } else {
-          request({ url: apiUrl.getUserinfo, method: "get" }).then((res) => {
-            ElMessage.success("授权成功");
-            router.push("/");
-          });
+          ElMessage.error("登录失败");
+          return false;
         }
       });
     };
+
     const store = useStore();
     store.commit("clearTags");
 
     return {
-      user_code,
-      verification_url,
-      qrcode_url,
-      getAccessToken,
+      param,
+      rules,
+      login,
+      submitForm,
     };
   },
 };
 </script>
 
 <style scoped>
-iframe {
-  width: 1024px;
-  height: 400px;
+.login-wrap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-image: url(../assets/img/login-bg.jpg);
+  background-size: 100%;
 }
-
-img {
-  width: 300px;
-  height: 300px;
+.ms-title {
+  width: 100%;
+  line-height: 50px;
+  text-align: center;
+  font-size: 20px;
+  color: #fff;
+  border-bottom: 1px solid #ddd;
+}
+.ms-login {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 350px;
+  margin: -190px 0 0 -175px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.3);
+  overflow: hidden;
+}
+.ms-content {
+  padding: 30px 30px;
+}
+.login-btn {
+  text-align: center;
+}
+.login-btn button {
+  width: 100%;
+  height: 36px;
+  margin-bottom: 10px;
+}
+.login-tips a {
+  font-size: 12px;
+  line-height: 30px;
+  color: #409eff;
 }
 </style>
