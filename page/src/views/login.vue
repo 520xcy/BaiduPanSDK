@@ -48,8 +48,8 @@ export default {
   setup() {
     const router = useRouter();
     const param = reactive({
-      user: "admin",
-      password: "admin888",
+      user: "",
+      password: "",
     });
   
     const rules = {
