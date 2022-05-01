@@ -26,10 +26,7 @@
           </span>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item command="user">个人中心</el-dropdown-item>
-              <el-dropdown-item divided command="loginout"
-                >退出登录</el-dropdown-item
-              >
+              <el-dropdown-item command="loginout">退出登录</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -43,8 +40,7 @@ import { useStore } from "vuex";
 import { useRouter } from "vue-router";
 import { apiUrl } from "../api/index";
 import noload_request from "../utils/noload_request";
-import { getfilesize } from "../utils/tools"
-
+import { getfilesize } from "../utils/tools";
 
 export default {
   setup() {
@@ -86,9 +82,9 @@ export default {
     const router = useRouter();
     const handleCommand = (command) => {
       if (command == "loginout") {
-        router.push("/login");
-      } else if (command == "user") {
-        router.push("/user");
+        noload_request({ url: apiUrl.logOut, method: "get" }).then((res) => {
+          router.push("/login");
+        });
       }
     };
 

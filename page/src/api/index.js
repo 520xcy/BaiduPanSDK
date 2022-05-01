@@ -12,5 +12,6 @@ export const apiUrl = {
     getStop: host + '/api/stop',
     getStatus: host + '/api/status',
     delTask: host + '/api/deltask',
-    delFiles: host + '/api/delfiles'
+    delFiles: host + '/api/delfiles',
+    logOut: host + '/api/logout'
 }

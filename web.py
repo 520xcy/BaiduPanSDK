@@ -3,11 +3,12 @@
 from crypt import methods
 import os
 import socket
+from time import time
 from waitress import serve
 from flask import Flask, render_template, request, url_for, jsonify, abort, Blueprint, make_response
 from datetime import timedelta
 from util.log import get_logger
-from util import tools
+from util.tools import mkdir, checkFileExist, readFile, writeFile, get_day_time
 from util.baidupan import baidupan
 # from watchdog.events import FileSystemEventHandler
 # from watchdog.observers import Observer
@@ -20,7 +21,8 @@ from flask_cors import CORS
 BASE_PATH = os.getcwd()
 TOKEN_PATH = os.path.join(BASE_PATH, '.token')
 
-shelve = ShelveHelp(os.path.join(BASE_PATH, '.task'))
+tasklistdb = ShelveHelp(os.path.join(BASE_PATH, '.task'))
+tokenlistdb = ShelveHelp(os.path.join(BASE_PATH, '.usertoken'))
 
 global DEVICE_CODE
 DEVICE_CODE = ''
@@ -28,14 +30,14 @@ log = get_logger(__name__, 'ERROR')
 ENV_PATH = os.path.join(BASE_PATH, '.env')
 DOWNLOAD_PATH = os.path.join(BASE_PATH, 'download')
 
-tools.mkdir(DOWNLOAD_PATH)
+mkdir(DOWNLOAD_PATH)
 
-if tools.checkFileExist(ENV_PATH):
-    ENV = json.loads(tools.readFile(ENV_PATH))
+if checkFileExist(ENV_PATH):
+    ENV = json.loads(readFile(ENV_PATH))
 else:
     ENV = {'username': 'admin', 'password': 'admin888',
            'ak': '', 'sk': '', 'aid': ''}
-    tools.writeFile(ENV_PATH, json.dumps(ENV))
+    writeFile(ENV_PATH, json.dumps(ENV))
     print('请先在.env文件内配置开放平台密钥')
     exit()
 
@@ -73,15 +75,23 @@ def home():
 
 @app.route('/api/login', methods=['POST'])
 def login():
-    res = request.get_json()
-    user = res['user'] if 'user' in res else ''
-    password = res['password'] if 'password' in res else ''
-    if user == str(ENV['username']) and password == str(ENV['password']):
-        key = str(user)+str(password)
-        hash = setHash(key)
-        return jsonify({"code": 200, "message": "登录成功", "token": hash.decode()})
-    else:
-        return jsonify({"code": 0, "message": "登录失败"})
+    try:
+        res = request.get_json()
+        user = res['user'] if 'user' in res else ''
+        password = res['password'] if 'password' in res else ''
+        if user == str(ENV['username']) and password == str(ENV['password']):
+            key = str(user)+str(password)
+            hash = setHash(key).decode()
+            _db = {
+                hash: get_day_time(365)
+            }
+            tokenlistdb.update(False, **_db)
+            return jsonify({"code": 200, "message": "登录成功", "token": hash})
+        else:
+            return jsonify({"code": 0, "message": "登录失败"})
+    except Exception as e:
+        log.error(str(e))
+        return jsonify({"code": 0, "message": str(e)})
 
 
 @app.route('/api/code', methods=['GET'])
@@ -100,10 +110,9 @@ def getCode():
 def getAccessToken():
     try:
         global DEVICE_CODE
-        print(DEVICE_CODE)
         res = baidu.getAccessToken(DEVICE_CODE)
         baidu.setAt(res['access_token'])
-        tools.writeFile(TOKEN_PATH, res['access_token'])
+        writeFile(TOKEN_PATH, res['access_token'])
         return jsonify({"code": 200, "message": "ok"})
     except Exception as e:
         log.error(str(e))
@@ -215,7 +224,7 @@ def updateTask():
                 'connect': connect
             }
         }
-        shelve.update(False, **d)
+        tasklistdb.update(False, **d)
         return jsonify({"code": 200, "data": d})
     except Exception as e:
         log.error(str(e))
@@ -225,7 +234,7 @@ def updateTask():
 @app.route('/api/status', methods=['GET'])
 def getStatus():
     try:
-        res = shelve.read().values()
+        res = tasklistdb.read().values()
         return jsonify({"code": 200, "data": list(res)})
     except Exception as e:
         log.error(str(e))
@@ -236,7 +245,7 @@ def getStatus():
 def delStatus():
     try:
         key = request.get_json()['key']
-        return jsonify({"code": 200, "data": shelve.trash(key)})
+        return jsonify({"code": 200, "data": tasklistdb.trash(key)})
     except Exception as e:
         log.error(str(e))
         return jsonify({"code": 0, "message": str(e)})
@@ -253,16 +262,31 @@ def delFiles():
         return jsonify({"code": 0, "message": str(e)})
 
 
+@app.route('/api/logout', methods=['GET'])
+def logOut():
+    try:
+        if 'Baidusdk' in request.headers:
+            reqtoken = request.headers.get('Baidusdk')
+            tokenlistdb.trash([reqtoken])
+        return jsonify({"code": 200, "data": 'ok'})
+    except Exception as e:
+        log.error(str(e))
+        return jsonify({"code": 0, "message": str(e)})
+
+
 @app.before_request
 def checkToken(*args, **kwargs):
 
     if request.path == '/api/login' or not request.path.startswith('/api') or request.method == 'OPTIONS':
-        return
+        return None
     if 'Baidusdk' in request.headers:
         reqtoken = request.headers.get('Baidusdk')
         hashtext = str(ENV['username'])+str(ENV['password'])
-        if checkHash(reqtoken, hashtext):
-            return
+        expire = tokenlistdb.get_one(reqtoken)
+        if expire:
+            if checkHash(reqtoken, hashtext) and expire > time():
+                return None
+            tokenlistdb.trash([reqtoken])
     return make_response(jsonify({"code": 0, "message": '请重新登录'}), 401)
 
 
@@ -283,8 +307,8 @@ def webrun():
 
 
 if __name__ == '__main__':
-    if tools.checkFileExist(TOKEN_PATH):
-        baidu.setAt(tools.readFile(TOKEN_PATH))
+    if checkFileExist(TOKEN_PATH):
+        baidu.setAt(readFile(TOKEN_PATH))
 
     freeze_support()
     # webbrowser.open("http://127.0.0.1:8181")

@@ -51,7 +51,13 @@ class ShelveHelp(object):
                 result[k] = db[k]
             return result
 
-    def trash(self, trash_key:list):
+    def get_one(self, key: str):
+        alldb = self.read()
+        if key in alldb.keys():
+            return alldb[key]
+        return None
+
+    def trash(self, trash_key: list):
         """
         删除指定key数据
         """
