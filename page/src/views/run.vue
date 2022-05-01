@@ -16,7 +16,7 @@
               type="danger"
               icon="Close"
               @click="handleStop"
-              style="width:100%"
+              style="width: 100%"
               >停止
             </el-button>
           </el-col>
@@ -41,7 +41,11 @@
         header-cell-class-name="table-header"
         @selection-change="handleSelectionChange"
       >
-        <el-table-column type="selection" width="55" :reserve-selection="true"></el-table-column>
+        <el-table-column
+          type="selection"
+          width="55"
+          :reserve-selection="true"
+        ></el-table-column>
         <el-table-column
           min-width="300px"
           label="文件名"
@@ -53,7 +57,7 @@
         <el-table-column width="200px" label="下载进度">
           <template #default="scope">
             <el-progress :percentage="(scope.row.size / scope.row.total) * 100">
-              {{ getfilesize(scope.row.speed) }}/s
+              {{ ((scope.row.size / scope.row.total) * 100).toFixed(2) }}%&nbsp;{{ getfilesize(scope.row.speed) }}/s
             </el-progress>
           </template>
         </el-table-column>
@@ -83,7 +87,7 @@ import { getfilesize } from "../utils/tools";
 export default {
   name: "run",
   beforeRouteLeave(to, from, next) {
-    window.clearInterval(this.timer)
+    window.clearInterval(this.timer);
     next();
   },
   setup() {
@@ -104,7 +108,6 @@ export default {
     };
     getData();
 
-    
     // 查询操作
     const handleStop = () => {
       let fsids = [];

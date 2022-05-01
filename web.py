@@ -204,31 +204,32 @@ def getStop():
 
 @app.route('/api/update', methods=['POST'])
 def updateTask():
-    try:
-        file = request.values.get('file')
-        localfile = request.values.get('localfile')
-        size = request.values.get('size')
-        status = request.values.get('status')
-        fsids = request.values.get('fsids')
-        date = request.values.get('date')
-        connect = request.values.get('connect')
+    if request.remote_addr == '127.0.0.1':
+        try:
+            file = request.values.get('file')
+            localfile = request.values.get('localfile')
+            size = request.values.get('size')
+            status = request.values.get('status')
+            fsids = request.values.get('fsids')
+            date = request.values.get('date')
+            connect = request.values.get('connect')
 
-        d = {
-            localfile: {
-                'localfile': localfile,
-                'file': file,
-                'size': size,
-                'status': status,
-                'fsids': fsids,
-                'date': date,
-                'connect': connect
+            d = {
+                localfile: {
+                    'localfile': localfile,
+                    'file': file,
+                    'size': size,
+                    'status': status,
+                    'fsids': fsids,
+                    'date': date,
+                    'connect': connect
+                }
             }
-        }
-        tasklistdb.update(False, **d)
-        return jsonify({"code": 200, "data": d})
-    except Exception as e:
-        log.error(str(e))
-        return jsonify({"code": 0, "message": str(e)})
+            tasklistdb.update(False, **d)
+            return jsonify({"code": 200, "data": d})
+        except Exception as e:
+            log.error(str(e))
+            return jsonify({"code": 0, "message": str(e)})
 
 
 @app.route('/api/status', methods=['GET'])
@@ -277,7 +278,7 @@ def logOut():
 @app.before_request
 def checkToken(*args, **kwargs):
 
-    if request.path == '/api/login' or not request.path.startswith('/api') or request.method == 'OPTIONS':
+    if request.path == '/api/update' or request.path == '/api/login' or not request.path.startswith('/api') or request.method == 'OPTIONS':
         return None
     if 'Baidusdk' in request.headers:
         reqtoken = request.headers.get('Baidusdk')

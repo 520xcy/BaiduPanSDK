@@ -151,8 +151,10 @@ class wget(threading.Thread):
             self.lck.release()
 
     def sendStatus(self, **params):
-        response = requests.post("http://127.0.0.1:8182/update", data=params)
-
+        response = requests.post("http://127.0.0.1:8182/api/update", data=params)
+        if response.status_code != 200:
+            print('状态发送失败')
+        
     def stop(self):
         self.__running = False
 

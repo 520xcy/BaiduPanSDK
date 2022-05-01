@@ -113,7 +113,6 @@ class baidupan(object):
             'extra': data['extra'] if 'extra' in data else 0,
             'needmedia': data['needmedia'] if 'needmedia' in data else 0
         }
-        print(payload)
         url = "https://pan.baidu.com/rest/2.0/xpan/multimedia"
         return self.getUrl(url, headers=headers, payload=payload)
 
