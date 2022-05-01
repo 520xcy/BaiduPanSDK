@@ -28,7 +28,7 @@ class wget(threading.Thread):
         self._speed = 0
         self.url = url
         self.local_filename = filename
-        self._local_filename = self.local_filename
+        self._local_filename = ''
         self.headers = headers
         self.total = total
         self.md5 = md5
@@ -50,20 +50,24 @@ class wget(threading.Thread):
             except FileExistsError:
                 pass
   
-            self.filename = os.path.basename(self.local_filename)
-            self.local_filename = os.path.join(_dirname, self.remove_nonchars(self.filename))
-
+            self.filename = self.remove_nonchars(os.path.basename(self.local_filename))
+            self.local_filename = os.path.join(_dirname, self.filename)
+            self._local_filename = self.local_filename
+            
             if os.path.isfile(self.local_filename):
                 _filename, _ext = os.path.splitext(self.filename)
                 self.filename = _filename+'_'+str(int(time.time()))+_ext
-                self.local_filename = os.path.join(os.path.dirname(
-                    self.local_filename), self.remove_nonchars(self.filename))
+                self.local_filename = os.path.join(_dirname, self.filename)
+                self._local_filename = self.local_filename
 
             self.local_filename += '.pydownloading'
             if os.path.isfile(self.local_filename):
                 self.size = os.path.getsize(self.local_filename)
                 if self.size > self.total:
                     raise RuntimeError(f"{self.filename}File is wrong.")
+                elif self.size == self.total:
+                    self.finishDownload()
+                    raise RuntimeError(f"{self.filename}File is finished.")
                 else:
                     self.headers['Range'] = "bytes=%d-" % (self.size, )
                     self._size = self.size + 1
@@ -76,7 +80,7 @@ class wget(threading.Thread):
 
             d = {
                 'file':self.filename,
-                'localfile': self._local_filename,
+                'localfile': self.local_filename,
                 'size':self.total,
                 'status':'Running',
                 'fsids':self.fsids,
@@ -123,17 +127,7 @@ class wget(threading.Thread):
             print(str(e))
 
         else:
-            os.rename(self.local_filename, self._local_filename)
-            d = {
-                'file':self.filename,
-                'localfile': self._local_filename,
-                'size':self.total,
-                'status':'Done',
-                'fsids':self.fsids,
-                'date':time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())),
-                'connect':self.connect
-            }
-            self.sendStatus(**d)
+            self.finishDownload()
 
         finally:
             # 以下用来将完成的线程移除线程队列
@@ -145,6 +139,19 @@ class wget(threading.Thread):
                 self.evnt.clear()
             self.lck.release()
 
+    def finishDownload(self):
+            os.rename(self.local_filename, self._local_filename)
+            d = {
+                'file':self.filename,
+                'localfile': self._local_filename,
+                'size':self.total,
+                'status':'Done',
+                'fsids':self.fsids,
+                'date':time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())),
+                'connect':self.connect
+            }
+            self.sendStatus(**d)
+            
     def sendStatus(self, **params):
         response = requests.post("http://127.0.0.1:8182/api/update", data=params)
         if response.status_code != 200:
