@@ -69,7 +69,7 @@ class wget(threading.Thread):
                     self._size = self.size + 1
 
             r = requests.get(self.url, stream=True,
-                             verify=True, headers=self.headers)
+                             verify=False, headers=self.headers)
             if self.total > 0:
                 print("[+] Size: %dKB" % (self.total / 1024))
             else:
