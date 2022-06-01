@@ -93,7 +93,7 @@ service.interceptors.response.use(
             })
             const reg = RegExp(/\"errno\":-6/);
             if (reg.test(data.message)) {
-                window.location.href = "/#/login";
+                window.location.href = "/#/getcode";
             }
             return Promise.reject(new Error(data.message || 'Error'))
         }
