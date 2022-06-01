@@ -1,4 +1,4 @@
-export const host = "http://127.0.0.1:8182"
+export const host = "http://" + document.domain + ":8182"
 export const apiUrl = {
     getLogin: host + '/api/login',
     getCode: host + '/api/code',
