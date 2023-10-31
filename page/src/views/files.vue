@@ -136,14 +136,19 @@ export default {
     const tableData = reactive({
       data: [],
     });
+    // 懒加载暂存
+    const loadTableData = {};
+
     // 获取表格数据
     const getData = () => {
-      noload_request({ url: apiUrl.getList, method: "get", params: query }).then(
-        (res) => {
-          console.log(res.data);
-          tableData.data = res.data.data.list;
-        }
-      );
+      noload_request({
+        url: apiUrl.getList,
+        method: "get",
+        params: query,
+      }).then((res) => {
+        console.log(res.data);
+        tableData.data = res.data.data.list;
+      });
     };
     getData();
     // 查询操作
@@ -163,6 +168,7 @@ export default {
     );
 
     const load = (row, treeNode, resolve) => {
+      loadTableData[row.path] = { row, treeNode, resolve };
       noload_request({
         url: apiUrl.getList,
         method: "get",
@@ -195,19 +201,38 @@ export default {
         type: "warning",
       }).then(() => {
         let files = [];
+        let fpath = [];
+
         for (const key in multipleSelection.value) {
           files.push(multipleSelection.value[key].path);
+          fpath.push(multipleSelection.value[key].f_dir);
         }
+        //fpath去重后保留的字段
+        let map = [];
+        fpath = fpath.filter((item) => {
+          return (
+            Object.keys(loadTableData).includes(item) &&
+            !files.includes(item) &&
+            !map.includes(item) &&
+            map.push(item)
+          );
+        });
         noload_request({
           url: apiUrl.delFiles,
           method: "post",
           data: { files: files },
         }).then((res) => {
-          ElMessage.success("删除成功");
           for (var i = tableData.data.length - 1; i != -1; i--) {
             if (files.includes(tableData.data[i].path))
               tableData.data.splice(i, 1);
           }
+          setTimeout(() => {
+            for (let i = 0; i < map.length; i++) {
+              const { row, treeNode, resolve } = loadTableData[map[i]];
+              load(row, treeNode, resolve);
+            }
+          }, 2000);
+          ElMessage.success("删除成功");
         });
       });
     };

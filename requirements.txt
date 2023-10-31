@@ -1,5 +1,4 @@
-Flask==1.1.2
-Flask_Bcrypt==1.0.1
-Flask_Cors==3.0.10
-requests==2.26.0
-waitress==1.4.4
+Flask
+Flask_Bcrypt
+Flask_Cors
+requests

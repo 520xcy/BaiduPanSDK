@@ -4,7 +4,6 @@ from crypt import methods
 import os
 import socket
 from time import time
-from waitress import serve
 from flask import Flask, render_template, request, url_for, jsonify, abort, Blueprint, make_response
 from datetime import timedelta
 from util.log import get_logger
@@ -153,6 +152,7 @@ def getList():
                         ) if request.values.get('recursion') else 0
         res = baidu.getListall(dir=dir, start=start, limit=limit,
                                order=order, desc=desc, recursion=recursion)
+        for i in res['list']: i['f_dir'] = dir
         return jsonify({"code": 200, "data": res})
     except Exception as e:
         log.error(str(e))
@@ -293,7 +293,7 @@ def checkToken(*args, **kwargs):
 
 def webrun():
     log.critical('web启动成功')
-    serve(app, host='0.0.0.0', port=8182)
+    app.run(host='0.0.0.0', port=8182, threaded=True)
     log.critical('web停止')
 
 # def watchdog():
